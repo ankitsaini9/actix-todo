@@ -1,12 +1,11 @@
 use actix_web::{web, App, HttpServer};
 
 mod handlers;
-use handlers::{User};
+use handlers::User;
 
-use std::{fs::File, collections::HashMap};
-use std::io::BufReader;
 use serde_json::Result;
-
+use std::io::BufReader;
+use std::{collections::HashMap, fs::File};
 
 // Reading the dataset
 fn read_dataset(path: String) -> Result<HashMap<String, User>> {
@@ -19,15 +18,9 @@ fn read_dataset(path: String) -> Result<HashMap<String, User>> {
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    let dataset =  read_dataset(String::from("dataset.json")).unwrap();
-    // let mut dataset = Dataset { 
-    //     username: String::from("ankit"), 
-    //     userdata: User {
-    //         password: String::from("password1"),
-    //         todo : vec![],
-    //     }
-    // };
+    let dataset = read_dataset(String::from("dataset.json")).unwrap();
     let dataset = web::Data::new(dataset);
+    
     HttpServer::new(move || {
         App::new()
             .service(handlers::user_todo)

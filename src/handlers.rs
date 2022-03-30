@@ -1,18 +1,18 @@
 use std::{collections::HashMap, fs::File, sync::Mutex};
 
-use actix_web::{get, post, HttpResponse, Responder, web::{Data, Json, Path}};
+use actix_web::{
+    get, post,
+    web::{Data, Json, Path},
+    HttpResponse, Responder,
+};
 
-use serde::{Serialize, Deserialize};
-
-
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct User {
     pub password: String,
     pub todo: Mutex<Vec<String>>,
 }
-
-
 
 #[derive(Serialize, Deserialize)]
 struct Username {
@@ -29,19 +29,26 @@ struct DeleteContent {
     idx: usize,
 }
 
-
 #[derive(Serialize, Deserialize)]
 struct EditContent {
     idx: usize,
     content: String,
 }
 
-
-
 // saving the dataset
 fn save_dataset(path: String, dataset: &HashMap<String, User>) {
     let file = File::create(path).unwrap();
     serde_json::to_writer(file, &dataset).expect("Falied to save data!");
+}
+
+#[get("/{username}")]
+async fn user_todo(username: Path<Username>, state: Data<HashMap<String, User>>) -> impl Responder {
+    let user = state.get(&username.username);
+    // Pattern match to retrieve the value
+    match user {
+        Some(_x) => HttpResponse::Ok().json(format!("Welcome {}", username.username)),
+        None => HttpResponse::Ok().json(format!("{} this user doesn't exist!", username.username)),
+    }
 }
 
 
@@ -51,23 +58,18 @@ async fn see(username: Path<Username>, state: Data<HashMap<String, User>>) -> im
     // Pattern match to retrieve the value
     match user {
         Some(x) => {
-                HttpResponse::Ok().json(format!(
-                "{} your todo:- {:?}",
-                username.username, &x.todo
-            ))
-        },
-        None =>{
-                HttpResponse::Ok().json(format!(
-                "{} this user doesn't exist!",
-                username.username
-            ))
-        },
+            HttpResponse::Ok().json(format!("{} your todo:- {:?}", username.username, &x.todo))
+        }
+        None => HttpResponse::Ok().json(format!("{} this user doesn't exist!", username.username)),
     }
 }
 
-
 #[post("/{username}/add")]
-async fn add(username: Path<Username>, todo: Json<AddContent>, state: Data<HashMap<String, User>>) -> impl Responder {
+async fn add(
+    username: Path<Username>,
+    todo: Json<AddContent>,
+    state: Data<HashMap<String, User>>,
+) -> impl Responder {
     let user = state.get(&username.username);
     let todo = todo.into_inner();
 
@@ -81,23 +83,18 @@ async fn add(username: Path<Username>, todo: Json<AddContent>, state: Data<HashM
 
             save_dataset(String::from("dataset.json"), &state);
 
-            HttpResponse::Ok().json(format!(
-            "{} your todo:- {:?}",
-            username.username, &x.todo
-            ))
-        },
-        None =>{
-            HttpResponse::Ok().json(format!(
-            "{} this user doesn't exist!",
-            username.username
-            ))
-        },
+            HttpResponse::Ok().json(format!("{} your todo:- {:?}", username.username, &x.todo))
+        }
+        None => HttpResponse::Ok().json(format!("{} this user doesn't exist!", username.username)),
     }
 }
 
-
 #[post("/{username}/delete")]
-async fn delete(username: Path<Username>, todo: Json<DeleteContent>, state: Data<HashMap<String, User>>) -> impl Responder {
+async fn delete(
+    username: Path<Username>,
+    todo: Json<DeleteContent>,
+    state: Data<HashMap<String, User>>,
+) -> impl Responder {
     let user = state.get(&username.username);
     let todo = todo.into_inner();
 
@@ -111,23 +108,18 @@ async fn delete(username: Path<Username>, todo: Json<DeleteContent>, state: Data
 
             save_dataset(String::from("dataset.json"), &state);
 
-            HttpResponse::Ok().json(format!(
-            "{} your todo:- {:?}",
-            username.username, &x.todo
-            ))
-        },
-        None =>{
-            HttpResponse::Ok().json(format!(
-            "{} this user doesn't exist!",
-            username.username
-            ))
-        },
+            HttpResponse::Ok().json(format!("{} your todo:- {:?}", username.username, &x.todo))
+        }
+        None => HttpResponse::Ok().json(format!("{} this user doesn't exist!", username.username)),
     }
 }
 
-
 #[post("/{username}/edit")]
-async fn edit(username: Path<Username>, todo: Json<EditContent>, state: Data<HashMap<String, User>>) -> impl Responder {
+async fn edit(
+    username: Path<Username>,
+    todo: Json<EditContent>,
+    state: Data<HashMap<String, User>>,
+) -> impl Responder {
     let user = state.get(&username.username);
     let todo = todo.into_inner();
 
@@ -141,63 +133,10 @@ async fn edit(username: Path<Username>, todo: Json<EditContent>, state: Data<Has
 
             save_dataset(String::from("dataset.json"), &state);
 
-            HttpResponse::Ok().json(format!(
-            "{} your todo:- {:?}",
-            username.username, &x.todo
-            ))
-        },
-        None =>{
-            HttpResponse::Ok().json(format!(
-            "{} this user doesn't exist!",
-            username.username
-            ))
-        },
-    }
-}
-
-#[get("/{username}")]
-async fn user_todo(username: Path<Username>, state: Data<HashMap<String, User>>) -> impl Responder {
-    let user = state.get(&username.username);
-    // Pattern match to retrieve the value
-    match user {
-        Some(_x) => {
-                HttpResponse::Ok().json(format!(
-                "Welcome {}",
-                username.username
-            ))
-        },
-        None =>{
-                HttpResponse::Ok().json(format!(
-                "{} this user doesn't exist!",
-                username.username
-            ))
-        },
+            HttpResponse::Ok().json(format!("{} your todo:- {:?}", username.username, &x.todo))
+        }
+        None => HttpResponse::Ok().json(format!("{} this user doesn't exist!", username.username)),
     }
 }
 
 
-
-
-// #[derive(Debug, Serialize, Deserialize)]
-// pub struct Dataset {
-//     pub username: String,
-//     pub userdata: User,
-// }
-
-// #[derive(Serialize, Deserialize)]
-// struct Username {
-//     username: String,
-// }
-
-// #[get("/{username}")]
-// async fn user_todo(username: Path<Username>, _: Data<Dataset>) -> impl Responder {
-//     // Ok(format!(
-//     //     "Welcome {},",
-//     //     username.username
-//     // ))
-//     // println!("{:?}", &state);
-//     HttpResponse::Ok().json(format!(
-//         "Welcome {},",
-//         username.username
-//     ))
-// }
